@@ -2,7 +2,9 @@
 
 Bu rehber, **anket + API + yönetim paneli + SQLite kayıtlar**ın hepsinin internette çalışması içindir.
 
-> **Önemli:** [Vercel](https://vercel.com) bu proje için **tam sürüm değildir**. Tam sürüm için **Railway** kullanın.
+> **Önemli:** [Vercel](https://vercel.com) bu proje için **tam sürüm değildir**. Tam sürüm için **Railway** veya **Fly.io** kullanın.
+
+> **Railway krediniz bitti / upgrade istemiyorsanız:** bu repoda **[FLY_YAYIN_REHBERI.md](./FLY_YAYIN_REHBERI.md)** ile Fly.io + kalıcı disk adımları var (`fly.toml` + `Dockerfile` hazır).
 
 ---
 
