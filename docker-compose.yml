@@ -8,8 +8,9 @@ services:
       NODE_ENV: production
       PORT: "3000"
       DATABASE_PATH: /data/budgetmind.db
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
-      JWT_SECRET: ${JWT_SECRET:-yerelde-degistirin-uzun-bir-gizli-anahtar}
+      # Varsayilanlar yalnizca yerel Docker icin (production kurallarini gecer). Canlida .env ile degistirin.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-YerelDocker123}
+      JWT_SECRET: ${JWT_SECRET:-01234567890123456789012345678901}
     volumes:
       - budgetmind_sqlite:/data
 

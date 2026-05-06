@@ -4,8 +4,9 @@ Finansal stres indeksi (FSI) anketi, Express API, SQLite kayıtlar ve yönetim p
 
 ## İnternete tam sürüm (önerilen)
 
+- **Güvenli tam yayın (HTTPS, sırlar, çerez):** **[GUVENLI_YAYIN.md](./GUVENLI_YAYIN.md)**  
 - **Railway:** **[YAYIN_REHBERI.md](./YAYIN_REHBERI.md)**  
-- **Railway kredisi bitti / ücret istemiyorsanız:** **[FLY_YAYIN_REHBERI.md](./FLY_YAYIN_REHBERI.md)** (Fly.io + `fly.toml` + kalıcı volume)
+- **Fly.io:** **[FLY_YAYIN_REHBERI.md](./FLY_YAYIN_REHBERI.md)**
 
 ## Yerel çalıştırma
 

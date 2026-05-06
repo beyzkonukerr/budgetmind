@@ -84,8 +84,10 @@ fly volumes create budgetmind_data --region fra --size 1
 Güçlü değerler kullanın:
 
 ```powershell
-fly secrets set DATABASE_PATH=/data/budgetmind.db ADMIN_PASSWORD="BURAYA_GÜÇLÜ_ŞİFRE" JWT_SECRET="BURAYA_EN_AZ_32_KARAKTER_RASTGELE"
+fly secrets set DATABASE_PATH=/data/budgetmind.db ADMIN_PASSWORD="EN_AZ_10_KARAKTER_GÜÇLÜ" JWT_SECRET="EN_AZ_32_KARAKTER_RASTGELE_ANAHATAR"
 ```
+
+Sunucu `NODE_ENV=production` ile çalışır: **`JWT_SECRET` en az 32**, **`ADMIN_PASSWORD` en az 10** karakter olmalı; **`admin123` yasaktır** (aksi halde süreç başlamaz). Ayrıntı: [GUVENLI_YAYIN.md](./GUVENLI_YAYIN.md).
 
 ---
 

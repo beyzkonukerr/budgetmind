@@ -57,10 +57,11 @@ Aynı serviste **Variables** → **New Variable** ile ekleyin:
 |----|--------|-----|
 | `DATABASE_PATH` | `/data/budgetmind.db` | Volume ile aynı kök (`/data`) |
 | `ADMIN_PASSWORD` | Kendi güçlü şifreniz | Giriş: kullanıcı **`admin`**, şifre bu |
-| `JWT_SECRET` | En az 32 karakter, rastgele | Örn. şifre yöneticisinden veya [random.org/strings](https://www.random.org/strings/?num=1&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new) |
-| `NODE_ENV` | `production` | İsteğe bağlı |
+| `JWT_SECRET` | **En az 32** karakter, rastgele | Üretimde kod kontrol eder |
+| `NODE_ENV` | `production` | Önerilir |
 
-**Not:** `PORT` genelde Railway tarafından verilir; eklemeyin (çakışma olmasın).
+**Not:** `PORT` genelde Railway tarafından verilir; eklemeyin (çakışma olmasın).  
+**Güvenlik:** `ADMIN_PASSWORD` **`admin123` olamaz**, üretimde en az **10** karakter. [GUVENLI_YAYIN.md](./GUVENLI_YAYIN.md)
 
 Kaydettiğinizde servis genelde **yeniden deploy** olur.
 

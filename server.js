@@ -21,10 +21,7 @@ const {
 /** submissions tablosu risk_level değerleri (filtre sorgusu) */
 const RISK_LEVEL_FILTERS = ["Yuksek Risk", "Orta Risk", "Dusuk Risk"];
 
-const app = express();
-if (process.env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const JWT_SECRET = process.env.JWT_SECRET || "budgetmind-super-secret";
@@ -33,8 +30,55 @@ const LOGIN_LOCK_MINUTES = Number(process.env.LOGIN_LOCK_MINUTES || 15);
 const loginThrottle = new Map();
 const PASSWORD_MIN_LENGTH = Number(process.env.PASSWORD_MIN_LENGTH || 8);
 
-app.use(cors());
-app.use(helmet({ contentSecurityPolicy: false }));
+if (IS_PRODUCTION) {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret || String(jwtSecret).length < 32) {
+    console.error(
+      "Production: JWT_SECRET ortam degiskeni zorunlu ve en az 32 karakter olmali."
+    );
+    process.exit(1);
+  }
+  const adminPw = process.env.ADMIN_PASSWORD;
+  if (!adminPw || adminPw === "admin123" || String(adminPw).length < 10) {
+    console.error(
+      "Production: ADMIN_PASSWORD zorunlu, 'admin123' kullanilamaz, en az 10 karakter olmali."
+    );
+    process.exit(1);
+  }
+}
+
+/** Uretimde kapali: X-Admin-Password ile tam yetki (sadece gelistirme veya bilincli acilim). */
+const allowLegacyAdminHeader =
+  process.env.ALLOW_LEGACY_ADMIN_HEADER === "true" ||
+  (!IS_PRODUCTION && process.env.DISABLE_LEGACY_ADMIN_HEADER !== "true");
+
+const app = express();
+if (IS_PRODUCTION) {
+  app.set("trust proxy", 1);
+}
+
+const corsOriginEnv = process.env.CORS_ORIGIN;
+if (corsOriginEnv) {
+  const allowed = corsOriginEnv
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  app.use(
+    cors({
+      origin: allowed.length === 1 ? allowed[0] : allowed,
+      credentials: true
+    })
+  );
+} else {
+  app.use(cors());
+}
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    strictTransportSecurity: IS_PRODUCTION ? { maxAge: 15552000 } : false
+  })
+);
 app.use(compression());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
@@ -157,10 +201,7 @@ app.post("/api/admin/login", (req, res) => {
     JWT_SECRET,
     { expiresIn: "12h" }
   );
-  res.setHeader(
-    "Set-Cookie",
-    `bm_admin_token=${token}; HttpOnly; Path=/; Max-Age=43200; SameSite=Lax`
-  );
+  res.setHeader("Set-Cookie", buildAuthCookie(token));
   logAudit({
     actorUserId: user.id,
     actorUsername: user.username,
@@ -177,10 +218,7 @@ app.get("/api/admin/me", requireAdmin, (req, res) => {
 
 app.post("/api/admin/logout", (_req, res) => {
   const user = getAuthUser(_req);
-  res.setHeader(
-    "Set-Cookie",
-    "bm_admin_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax"
-  );
+  res.setHeader("Set-Cookie", clearAuthCookie());
   if (user) {
     logAudit({
       actorUserId: user.userId,
@@ -968,16 +1006,49 @@ function applyScenarioToRows(rows, scenario) {
   });
 }
 
+const AUTH_COOKIE = "bm_admin_token";
+const AUTH_COOKIE_MAX_AGE = 43200;
+
+function buildAuthCookie(token) {
+  const parts = [
+    `${AUTH_COOKIE}=${token}`,
+    "HttpOnly",
+    "Path=/",
+    `Max-Age=${AUTH_COOKIE_MAX_AGE}`,
+    "SameSite=Lax"
+  ];
+  if (IS_PRODUCTION) {
+    parts.push("Secure");
+  }
+  return parts.join("; ");
+}
+
+function clearAuthCookie() {
+  const parts = [
+    `${AUTH_COOKIE}=`,
+    "HttpOnly",
+    "Path=/",
+    "Max-Age=0",
+    "SameSite=Lax"
+  ];
+  if (IS_PRODUCTION) {
+    parts.push("Secure");
+  }
+  return parts.join("; ");
+}
+
 function requireAdmin(req, res, next) {
   const user = getAuthUser(req);
   if (user) {
     req.adminUser = user;
     return next();
   }
-  const headerPassword = req.headers["x-admin-password"];
-  if (headerPassword && headerPassword === ADMIN_PASSWORD) {
-    req.adminUser = { userId: 0, username: "legacy-admin", role: "admin" };
-    return next();
+  if (allowLegacyAdminHeader) {
+    const headerPassword = req.headers["x-admin-password"];
+    if (headerPassword && headerPassword === ADMIN_PASSWORD) {
+      req.adminUser = { userId: 0, username: "legacy-admin", role: "admin" };
+      return next();
+    }
   }
   return res.status(401).json({ message: "Admin oturumu gerekli." });
 }
@@ -1290,7 +1361,7 @@ function getCookie(req, key) {
 }
 
 function getAuthUser(req) {
-  const token = getCookie(req, "bm_admin_token");
+  const token = getCookie(req, AUTH_COOKIE);
   if (!token) return null;
   try {
     const payload = jwt.verify(token, JWT_SECRET);
