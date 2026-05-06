@@ -1,0 +1,6 @@
+# Railway (Nixpacks) — Node 20 ve başlatma komutu
+[variables]
+NIXPACKS_NODE_VERSION = "20"
+
+[start]
+cmd = "node server.js"

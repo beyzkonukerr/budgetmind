@@ -2,7 +2,15 @@
 
 Bu rehber, **anket + API + yönetim paneli + SQLite kayıtlar**ın hepsinin internette çalışması içindir.
 
-> **Önemli:** [Vercel](https://vercel.com) bu proje için **tam sürüm değildir** (sunucu + veritabanı birlikte yok). Tam sürüm için aşağıdaki **Railway** adımlarını kullanın.
+> **Önemli:** [Vercel](https://vercel.com) bu proje için **tam sürüm değildir**. Tam sürüm için **Railway** kullanın.
+
+---
+
+## GitHub hazır mı?
+
+Bu repoyu kullanın (kod burada olmalı): **[github.com/beyzkonukerr/budgetmind](https://github.com/beyzkonukerr/budgetmind)**
+
+Tarayıcıda açıp dosyaların (`server.js`, `package.json` vb.) göründüğünü doğrulayın. Tamamsa aşağıdaki adımlara geçin — **sırayı mümkün olduğunca bu şekilde uygulayın.**
 
 ---
 
@@ -10,111 +18,109 @@ Bu rehber, **anket + API + yönetim paneli + SQLite kayıtlar**ın hepsinin inte
 
 | Ne | Neden |
 |----|--------|
-| Bir **e-posta** (tercihen Gmail) | GitHub ve Railway hesabı için |
-| **GitHub** hesabı | Kodun internette durması için |
-| **[Railway](https://railway.app)** hesabı | Sunucunun 7/24 çalışması için |
-| İsteğe bağlı: **kredi kartı** | Railway ücretlendirme politikasına göre (deneme kredisi sonrası) |
+| **[Railway](https://railway.app)** hesabı (GitHub ile giriş) | Sunucu |
+| İsteğe bağlı: **kredi kartı** | Railway deneme sonrası ücretlendirme için (site politikalarına bakın) |
 
-Kod tarafında gerekli dosyalar repoda hazır: `Dockerfile`, `railway.toml`, `DATABASE_PATH` desteği.
+Kod tarafında hazır: `Dockerfile`, `railway.toml`, `nixpacks.toml`, `DATABASE_PATH` desteği.
 
 ---
 
-## Adım 1 — Kodu GitHub’a koyun
+## Railway — adım adım (panoda tıklayarak)
 
-### En kolay yol: GitHub Desktop
+### 1) Giriş
 
-1. [GitHub Desktop](https://desktop.github.com) indirip kurun.
-2. GitHub’da **yeni repository** oluşturun (ör. `budgetmind`).
-3. GitHub Desktop’ta **File → Add local repository** → proje klasörünü seçin (`harcama_takip_analiz`).
-4. İlk kez ise **create repository** / commit mesajı yazıp **Publish repository** deyin.
-5. GitHub web sayfasında dosyalarınızın göründüğünü kontrol edin.
+1. [railway.app](https://railway.app) → **Login** → **GitHub** ile devam.
 
-*(Komut satırı biliyorsanız: `git remote add` + `git push` da olur.)*
+### 2) Yeni proje + repo
 
----
+1. **New Project**
+2. **Deploy from GitHub repo** (veya benzer ifade)
+3. Listeden **`beyzkonukerr/budgetmind`** repoyu seçin ve onaylayın.
+4. İlk **build/deploy** bitene kadar bekleyin (Loglar sekmesinden izleyebilirsiniz).
 
-## Adım 2 — Railway’e giriş
+### 3) Kalıcı disk (Volume) — önce bunu bağlayın
 
-1. [https://railway.app](https://railway.app) → **Login** → **GitHub ile devam**.
-2. Onay verin.
+Kayıtların silinmemesi için:
 
----
+1. Oluşan **servise** (web / app) tıklayın.
+2. **Volumes** (veya **New Volume**) → yeni volume ekleyin.
+3. **Mount path** tam olarak: **`/data`**
+4. Volume’u bu servise **bağlayıp** kaydedin.
 
-## Adım 3 — Projeyi Railway’de oluşturun
+### 4) Ortam değişkenleri (Variables)
 
-1. **New Project** → **Deploy from GitHub repo**.
-2. Listeden `budgetmind` (veya adını verdiğiniz) repoyu seçin.
-3. Railway otomatik **Build** ve **Deploy** dener. Bir süre bekleyin.
+Aynı serviste **Variables** → **New Variable** ile ekleyin:
 
----
+| Ad | Değer | Not |
+|----|--------|-----|
+| `DATABASE_PATH` | `/data/budgetmind.db` | Volume ile aynı kök (`/data`) |
+| `ADMIN_PASSWORD` | Kendi güçlü şifreniz | Giriş: kullanıcı **`admin`**, şifre bu |
+| `JWT_SECRET` | En az 32 karakter, rastgele | Örn. şifre yöneticisinden veya [random.org/strings](https://www.random.org/strings/?num=1&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new) |
+| `NODE_ENV` | `production` | İsteğe bağlı |
 
-## Adım 4 — Kalıcı disk (Volume) — kayıtların silinmemesi için şart
+**Not:** `PORT` genelde Railway tarafından verilir; eklemeyin (çakışma olmasın).
 
-SQLite dosyası diske yazılır; bulutta “volume” yoksa uygulama yeniden başlayınca veri kaybolabilir.
+Kaydettiğinizde servis genelde **yeniden deploy** olur.
 
-1. Railway’de projenize girin → servisinize (web) tıklayın.
-2. **Volumes** (veya **New Volume**) bölümünü bulun.
-3. **Mount path** olarak şunu yazın: **`/data`**
-4. Kaydedin / volume’u servise bağlayın.
+### 5) İnternet adresi (domain)
 
----
+1. Servis → **Settings** → **Networking** (veya **Public Networking**).
+2. **Generate Domain** (veya **Custom Domain**) ile bir adres üretin.
+3. Çıkan URL’yi tarayıcıda açın:
+   - Ana uygulama: `https://SIZIN-ADRES/`
+   - Yönetim: `https://SIZIN-ADRES/admin.html`
 
-## Adım 5 — Ortam değişkenleri (Variables)
+### 6) İlk giriş (yönetim)
 
-Servis → **Variables** sekmesi → **New Variable**:
-
-| Ad | Örnek değer | Açıklama |
-|----|----------------|----------|
-| `DATABASE_PATH` | `/data/budgetmind.db` | Volume ile aynı yol |
-| `ADMIN_PASSWORD` | Güçlü bir şifre | İlk admin girişi (`admin` kullanıcısı) |
-| `JWT_SECRET` | En az 32 karakter rastgele | [random.org](https://www.random.org/strings) veya uzun şifre |
-| `NODE_ENV` | `production` | İsteğe bağlı; üretim modu |
-
-**Not:** Railway genelde `PORT` verir; eklemeniz gerekmez.
-
-Değişiklikten sonra servis **yeniden deploy** olur.
+- Kullanıcı adı: **`admin`**
+- Şifre: Variables’ta yazdığınız **`ADMIN_PASSWORD`**
 
 ---
 
-## Adım 6 — Site adresinizi alın
+## Kontrol listesi
 
-1. Servis → **Settings** → **Networking** / **Generate Domain**.
-2. Çıkan adresi (ör. `xxx.up.railway.app`) tarayıcıda açın.
-3. Ana sayfa: `/` — Yönetim: `/admin.html`
-
-Varsayılan yönetim kullanıcı adı: **`admin`** — şifre: Variables’ta verdiğiniz `ADMIN_PASSWORD`.
-
----
-
-## Adım 7 — Kontrol listesi
-
-- [ ] Ana sayfada anket açılıyor.
-- [ ] “FSI hesapla” sonuç veriyor.
+- [ ] GitHub’da `budgetmind` reposu dolu.
+- [ ] Railway’de servis **Running** / deploy başarılı.
+- [ ] Volume mount: **`/data`**
+- [ ] `DATABASE_PATH=/data/budgetmind.db`
+- [ ] `JWT_SECRET` ve `ADMIN_PASSWORD` tanımlı.
+- [ ] Ana sayfada anket ve “FSI hesapla” çalışıyor.
 - [ ] `/admin.html` ile giriş yapılabiliyor.
-- [ ] Volume tanımlı ve `DATABASE_PATH=/data/budgetmind.db`.
 
 ---
 
-## E-posta gönderimi (isteğe bağlı)
+## Derleme (build) hata verirse
 
-Gmail uygulama şifresi vb. için `.env.example` içindeki `SMTP_*` alanlarını Railway **Variables** olarak ekleyin (`SMTP_USER`, `SMTP_PASS`, …).
-
----
-
-## Sorun çıkarsa
-
-- **Build hata veriyor:** Railway loglarına bakın; `better-sqlite3` için Linux’ta derleme gerekir — `Dockerfile` bunun içindir. Serviste **Dockerfile kullanımı** seçeneği varsa açın veya Root Directory / Dockerfile path’i kontrol edin.
-- **Giriş / çerez:** Siteyi her zaman Railway verdiği **HTTPS** adresiyle kullanın.
-- **Yerelde Docker denemek:** Proje kökünde `docker compose up --build` — sonra `http://localhost:3000`.
+1. Servis → **Deployments** → son deploy → **Logs**.
+2. `better-sqlite3` veya derleyici hatası görürseniz Railway’de **Dockerfile ile build** kullanmayı deneyin:
+   - Servis ayarlarında builder / Dockerfile seçeneği varsa **Dockerfile** yolunu proje kökü olarak bırakın (repoda `Dockerfile` var).
+3. Yine olmazsa logdaki **tam hata metnini** kopyalayıp destek alın.
 
 ---
 
-## Özet
+## E-posta (isteğe bağlı)
 
-1. GitHub’a kod yükle  
-2. Railway → GitHub repoyu bağla  
-3. **Volume:** `/data`  
-4. **Variables:** `DATABASE_PATH`, `JWT_SECRET`, `ADMIN_PASSWORD`  
-5. Domain aç → internetten kullan
+`.env.example` içindeki `SMTP_*` alanlarını Railway **Variables** olarak ekleyin.
+
+---
+
+## Bana iletebileceğiniz bilgiler (takılırsanız)
+
+Aşağıdakilerden **birini** yazmanız yeterli; devamını birlikte netleştiririz:
+
+- Railway **Deploy log** son 30–40 satır (kopyala-yapıştır), veya  
+- “Build failed” ekranının ekran görüntüsü açıklaması, veya  
+- Üretilen site adresi + “şu sayfa açılmıyor / şu buton çalışmıyor” cümlesi.
+
+**Güvenlik:** `ADMIN_PASSWORD`, `JWT_SECRET` veya e-posta şifrelerini **paylaşmayın**.
+
+---
+
+## Özet (Railway)
+
+1. **New Project** → GitHub → **`beyzkonukerr/budgetmind`**
+2. **Volume** → mount **`/data`**
+3. **Variables** → `DATABASE_PATH`, `ADMIN_PASSWORD`, `JWT_SECRET`, isteğe bağlı `NODE_ENV=production`
+4. **Generate Domain** → siteyi ve `/admin.html` adresini test edin
 
 Bu adımlarla uygulama **tek parça** çalışır: anket, kayıt, yönetim ve analizler aynı sunucuda.
