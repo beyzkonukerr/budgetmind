@@ -1,0 +1,33 @@
+{
+  "name": "harcama_takip_analiz",
+  "version": "1.0.0",
+  "description": "Bu proje, gonderdiginiz `YBS_SUNUM_SON_HALI` ve `1919B012506629` belgelerindeki yapiya gore tasarlanmis, Onedio tarzi soru-cevap ile sonuc ureten bir prototiptir.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "node scripts/postinstall.js",
+    "rebuild:sqlite": "npm rebuild better-sqlite3",
+    "test": "node scripts/smoke-test.js",
+    "backup:db": "node scripts/backup-db.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18 <=22"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "ml-regression": "^6.3.0",
+    "nodemailer": "^8.0.5",
+    "pdfkit": "^0.18.0",
+    "simple-statistics": "^7.8.9"
+  }
+}

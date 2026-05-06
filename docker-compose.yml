@@ -1,0 +1,17 @@
+# Yerelde Docker ile tam uygulama: docker compose up --build
+services:
+  budgetmind:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_PATH: /data/budgetmind.db
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      JWT_SECRET: ${JWT_SECRET:-yerelde-degistirin-uzun-bir-gizli-anahtar}
+    volumes:
+      - budgetmind_sqlite:/data
+
+volumes:
+  budgetmind_sqlite:

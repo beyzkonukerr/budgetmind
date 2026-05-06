@@ -1,0 +1,1381 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yönetim paneli | BudgetMind</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <header class="admin-topbar">
+      <div class="admin-topbar__inner">
+        <div>
+          <div class="admin-topbar__title">BudgetMind yönetim paneli</div>
+          <div class="admin-topbar__meta">Analiz panosu, dışa aktarım ve denetim</div>
+        </div>
+        <nav class="admin-nav" aria-label="Sayfa bölümleri">
+          <a href="#panel-analytics">Analiz</a>
+          <a href="#panel-records">Kayıtlar</a>
+          <a href="#panel-stats">İstatistik</a>
+          <a href="#panel-insights">İçgörü</a>
+          <a href="#panel-users">Hesaplar</a>
+          <a href="#panel-audit">Denetim</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container container--wide">
+      <section class="panel panel--compact" id="panel-session">
+        <h1 class="panel__title">Oturum</h1>
+        <div class="meta-fields form-grid-2">
+          <div>
+            <label for="admin-username">Kullanıcı adı</label>
+            <input id="admin-username" type="text" placeholder="admin" autocomplete="username" />
+          </div>
+          <div>
+            <label for="admin-password">Şifre</label>
+            <input id="admin-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="login-btn" type="button" class="btn btn--primary">Giriş</button>
+          <button id="logout-btn" type="button" class="btn btn--secondary">Çıkış</button>
+        </div>
+        <p id="session-info" class="session-line"></p>
+      </section>
+
+      <section class="panel" id="panel-filters">
+        <h2 class="panel__title">Dönem ve veri kümesi</h2>
+        <p class="panel__lead">
+          Aşağıdaki tarih, risk ve liste uzunluğu tüm grafikler, özet kartlar, CSV/PDF ve istatistiksel analiz
+          için aynı filtreyi kullanır. Geçmişe yönelik inceleme için hızlı dönem seçin veya tarih aralığını elle
+          girin.
+        </p>
+        <div class="filter-presets" role="group" aria-label="Hızlı dönem">
+          <button type="button" class="btn btn--secondary btn--sm" data-preset="7d">Son 7 gün</button>
+          <button type="button" class="btn btn--secondary btn--sm" data-preset="30d">Son 30 gün</button>
+          <button type="button" class="btn btn--secondary btn--sm" data-preset="thismonth">Bu ay</button>
+          <button type="button" class="btn btn--secondary btn--sm" data-preset="lastmonth">Geçen ay</button>
+          <button type="button" class="btn btn--secondary btn--sm" data-preset="all">Tümü</button>
+        </div>
+        <div class="meta-fields form-grid-2">
+          <div>
+            <label for="start-date">Başlangıç</label>
+            <input id="start-date" type="date" />
+          </div>
+          <div>
+            <label for="end-date">Bitiş</label>
+            <input id="end-date" type="date" />
+          </div>
+          <div>
+            <label for="risk-filter">Risk segmenti</label>
+            <select id="risk-filter">
+              <option value="all">Tüm riskler</option>
+              <option value="Yuksek Risk">Yüksek risk</option>
+              <option value="Orta Risk">Orta risk</option>
+              <option value="Dusuk Risk">Düşük risk</option>
+            </select>
+          </div>
+          <div>
+            <label for="latest-limit">Son kayıt listesi</label>
+            <select id="latest-limit">
+              <option value="10">10 kayıt</option>
+              <option value="25">25 kayıt</option>
+              <option value="50">50 kayıt</option>
+            </select>
+          </div>
+        </div>
+        <p id="filter-active" class="filter-active-line" aria-live="polite"></p>
+        <div class="toolbar">
+          <button id="apply-filter-btn" type="button" class="btn btn--primary">Filtreyi uygula</button>
+          <button id="refresh-btn" type="button" class="btn btn--secondary">Yenile</button>
+          <button id="csv-btn" type="button" class="btn btn--secondary">CSV</button>
+          <button id="pdf-btn" type="button" class="btn btn--secondary">PDF</button>
+        </div>
+        <div id="summary"></div>
+      </section>
+
+      <section class="panel" id="panel-analytics">
+        <h2 class="panel__title">Analiz panosu</h2>
+        <p class="panel__lead">
+          Sol: risk sınıflarına göre kayıt sayısı. Sağ: FSI skorunun aralıklara göre dağılımı. Aşağıda
+          zaman içinde ortalama FSI eğilimi ve aynı dönemdeki analiz hacmi (çubuk).
+        </p>
+        <div class="chart-grid">
+          <div class="chart-panel">
+            <h3 class="chart-panel__title">Risk dağılımı</h3>
+            <div class="chart-area">
+              <canvas id="risk-chart" height="140"></canvas>
+            </div>
+          </div>
+          <div class="chart-panel">
+            <h3 class="chart-panel__title">FSI skor aralıkları</h3>
+            <div class="chart-area">
+              <canvas id="fsi-hist-chart" height="140"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="chart-panel chart-panel--full">
+          <div class="chart-toolbar">
+            <span class="chart-toolbar__label">Zaman serisi gruplaması:</span>
+            <div class="btn-group" role="group">
+              <button id="group-day-btn" type="button" class="btn btn--secondary btn--sm" data-group="day">
+                Günlük
+              </button>
+              <button id="group-week-btn" type="button" class="btn btn--secondary btn--sm" data-group="week">
+                Haftalık
+              </button>
+              <button id="group-month-btn" type="button" class="btn btn--secondary btn--sm" data-group="month">
+                Aylık
+              </button>
+            </div>
+          </div>
+          <div class="chart-area chart-area--tall">
+            <canvas id="trend-chart" height="200"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-records">
+        <h2 class="panel__title">Son kayıtlar</h2>
+        <p class="panel__lead">Seçilen filtreye göre en güncel analizler (tablo üstündeki liste uzunluğu).</p>
+        <div id="latest" class="data-table-wrap"></div>
+      </section>
+
+      <section class="panel" id="panel-stats">
+        <h2 class="panel__title">İstatistiksel analiz</h2>
+        <p class="panel__lead">
+          Betimleyici özet, Pearson korelasyonu ve doğrusal regresyon (OLS). Üstteki dönem ve risk filtresiyle
+          aynı gözlem kümesi kullanılır.
+        </p>
+        <div class="toolbar">
+          <button id="load-stats-btn" type="button" class="btn btn--primary">Hesapla / güncelle</button>
+        </div>
+        <div id="stats-summary"></div>
+        <h3>Betimleyici istatistikler</h3>
+        <div id="stats-descriptive" class="data-table-wrap"></div>
+        <h3>Pearson korelasyon matrisi</h3>
+        <div id="stats-corr" class="data-table-wrap"></div>
+        <h3>Regresyon</h3>
+        <div id="stats-regression"></div>
+      </section>
+
+      <section class="panel" id="panel-insights">
+        <h2 class="panel__title">Veri madenciliği içgörüleri</h2>
+        <p class="panel__lead">
+          Bu bölüm, seçili filtreye göre trend kırılımı, segment karşılaştırması ve yönetim aksiyon önerilerini
+          otomatik üretir.
+        </p>
+        <div class="toolbar">
+          <label for="insight-window" class="inline-label">Trend penceresi</label>
+          <select id="insight-window">
+            <option value="5">5 kayıt</option>
+            <option value="7" selected>7 kayıt</option>
+            <option value="14">14 kayıt</option>
+            <option value="21">21 kayıt</option>
+          </select>
+          <button id="load-insights-btn" type="button" class="btn btn--primary">İçgörü üret</button>
+        </div>
+        <div id="insights-priority" class="insights-priority"></div>
+        <div id="insights-kpis" class="metric-grid"></div>
+        <h3>Risk segment karşılaştırması</h3>
+        <div id="insights-segments" class="data-table-wrap"></div>
+        <h3>Yönetim notları</h3>
+        <div id="insights-notes" class="insight-notes"></div>
+        <h3>Önceliklendirilmiş yol haritası</h3>
+        <div id="insights-roadmap" class="data-table-wrap"></div>
+
+        <h3>Senaryo simülasyonu (“what-if”)</h3>
+        <p class="panel__lead" style="margin-top: -8px">
+          Aynı filtrelenmiş gözlem kümesinde bütçe baskısı / stres / davranış için hipotetik değişim uygular;
+          FSI ve aksiyon skorunun nasıl etkileneceğini gösterir. Yüzdeler çarpan olarak (ör. −10 = %10 azalma),
+          davranış alanında mutlak puan (0–1 ölçeğinde) eklenir.
+        </p>
+        <div class="meta-fields form-grid-2 sim-fields">
+          <div>
+            <label for="sim-bp-pct">Bütçe baskısı değişimi (%)</label>
+            <input id="sim-bp-pct" type="number" step="1" min="-50" max="50" value="-10" />
+          </div>
+          <div>
+            <label for="sim-st-pct">Stres (norm.) değişimi (%)</label>
+            <input id="sim-st-pct" type="number" step="1" min="-50" max="50" value="0" />
+          </div>
+          <div>
+            <label for="sim-beh-pts">Davranış skoru düzeltmesi (mutlak)</label>
+            <input id="sim-beh-pts" type="number" step="0.01" min="-0.5" max="0.5" value="0.05" />
+          </div>
+          <div class="sim-actions">
+            <label class="inline-label" style="visibility: hidden">Çalıştır</label>
+            <button id="run-sim-btn" type="button" class="btn btn--secondary">Senaryoyu çalıştır</button>
+          </div>
+        </div>
+        <p id="sim-methodology" class="subtitle" style="margin-top: 0"></p>
+        <div id="sim-results" class="sim-results"></div>
+      </section>
+
+      <section id="panel-users" class="panel" style="display:none;">
+        <h2 class="panel__title">Kullanıcı yönetimi</h2>
+        <p class="panel__lead">Yalnızca yönetici rolü. Yeni hesap oluşturma ve rol atama.</p>
+        <div class="meta-fields form-grid-2">
+          <div>
+            <label for="new-username">Kullanıcı adı</label>
+            <input id="new-username" type="text" placeholder="ör. analist1" autocomplete="off" />
+          </div>
+          <div>
+            <label for="new-password">Şifre</label>
+            <input id="new-password" type="password" placeholder="güçlü parola" autocomplete="new-password" />
+          </div>
+          <div>
+            <label for="new-role">Rol</label>
+            <select id="new-role">
+              <option value="viewer">Görüntüleyici</option>
+              <option value="analyst">Analist</option>
+              <option value="admin">Yönetici</option>
+            </select>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="add-user-btn" type="button" class="btn btn--primary">Kullanıcı ekle</button>
+          <button id="refresh-users-btn" type="button" class="btn btn--secondary">Listeyi yenile</button>
+        </div>
+        <div id="users-table" class="data-table-wrap"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Parola değiştir</h2>
+        <p class="panel__lead">Oturum açmış kullanıcı kendi parolasını güncelleyebilir.</p>
+        <div class="meta-fields form-grid-2">
+          <div>
+            <label for="old-password">Mevcut parola</label>
+            <input id="old-password" type="password" autocomplete="current-password" />
+          </div>
+          <div>
+            <label for="new-self-password">Yeni parola</label>
+            <input id="new-self-password" type="password" autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="change-password-btn" type="button" class="btn btn--primary">Güncelle</button>
+        </div>
+      </section>
+
+      <section id="panel-audit" class="panel" style="display:none;">
+        <h2 class="panel__title">Denetim kayıtları</h2>
+        <p class="panel__lead">Sistem olayları; filtre ve arama ile daraltılabilir.</p>
+        <div class="meta-fields">
+          <label for="audit-action">Olay türü</label>
+          <select id="audit-action">
+            <option value="">Tümü</option>
+            <option value="LOGIN_SUCCESS">LOGIN_SUCCESS</option>
+            <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+            <option value="LOGOUT">LOGOUT</option>
+            <option value="PASSWORD_CHANGED_SELF">PASSWORD_CHANGED_SELF</option>
+            <option value="USER_CREATED">USER_CREATED</option>
+            <option value="USER_UPDATED">USER_UPDATED</option>
+            <option value="USER_DELETED">USER_DELETED</option>
+          </select>
+          <label for="audit-search">Metin araması</label>
+          <input id="audit-search" type="text" placeholder="kullanıcı adı, hedef, ayrıntı…" />
+          <label class="checkbox">
+            <input id="audit-critical-only" type="checkbox" />
+            Yalnızca kritik olaylar (başarısız giriş, silme)
+          </label>
+        </div>
+        <div class="toolbar">
+          <button id="refresh-audit-btn" type="button" class="btn btn--primary">Yenile</button>
+          <button id="export-audit-btn" type="button" class="btn btn--secondary">CSV dışa aktar</button>
+        </div>
+        <div class="toolbar">
+          <button id="audit-prev-btn" type="button" class="btn btn--secondary">Önceki</button>
+          <button id="audit-next-btn" type="button" class="btn btn--secondary">Sonraki</button>
+          <span id="audit-page-info" class="session-line" style="margin:0"></span>
+        </div>
+        <div id="audit-table" class="data-table-wrap"></div>
+      </section>
+    </main>
+
+    <script>
+      const summaryEl = document.getElementById("summary");
+      const latestEl = document.getElementById("latest");
+      const usernameInput = document.getElementById("admin-username");
+      const passwordInput = document.getElementById("admin-password");
+      const sessionInfoEl = document.getElementById("session-info");
+      const startDateInput = document.getElementById("start-date");
+      const endDateInput = document.getElementById("end-date");
+      const riskFilter = document.getElementById("risk-filter");
+      const latestLimit = document.getElementById("latest-limit");
+      const filterActiveEl = document.getElementById("filter-active");
+      const applyFilterBtn = document.getElementById("apply-filter-btn");
+      const loginBtn = document.getElementById("login-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const refreshBtn = document.getElementById("refresh-btn");
+      const csvBtn = document.getElementById("csv-btn");
+      const pdfBtn = document.getElementById("pdf-btn");
+      const groupDayBtn = document.getElementById("group-day-btn");
+      const groupWeekBtn = document.getElementById("group-week-btn");
+      const groupMonthBtn = document.getElementById("group-month-btn");
+      const chartEl = document.getElementById("risk-chart");
+      const fsiHistChartEl = document.getElementById("fsi-hist-chart");
+      const trendChartEl = document.getElementById("trend-chart");
+      const userManagementEl = document.getElementById("panel-users");
+      const newUsernameInput = document.getElementById("new-username");
+      const newPasswordInput = document.getElementById("new-password");
+      const newRoleInput = document.getElementById("new-role");
+      const addUserBtn = document.getElementById("add-user-btn");
+      const refreshUsersBtn = document.getElementById("refresh-users-btn");
+      const usersTableEl = document.getElementById("users-table");
+      const oldPasswordInput = document.getElementById("old-password");
+      const newSelfPasswordInput = document.getElementById("new-self-password");
+      const changePasswordBtn = document.getElementById("change-password-btn");
+      const auditCardEl = document.getElementById("panel-audit");
+      const refreshAuditBtn = document.getElementById("refresh-audit-btn");
+      const auditTableEl = document.getElementById("audit-table");
+      const auditActionInput = document.getElementById("audit-action");
+      const auditSearchInput = document.getElementById("audit-search");
+      const auditCriticalOnlyInput = document.getElementById("audit-critical-only");
+      const exportAuditBtn = document.getElementById("export-audit-btn");
+      const auditPrevBtn = document.getElementById("audit-prev-btn");
+      const auditNextBtn = document.getElementById("audit-next-btn");
+      const auditPageInfoEl = document.getElementById("audit-page-info");
+      const loadStatsBtn = document.getElementById("load-stats-btn");
+      const statsSummaryEl = document.getElementById("stats-summary");
+      const statsDescEl = document.getElementById("stats-descriptive");
+      const statsCorrEl = document.getElementById("stats-corr");
+      const statsRegEl = document.getElementById("stats-regression");
+      const insightWindowInput = document.getElementById("insight-window");
+      const loadInsightsBtn = document.getElementById("load-insights-btn");
+      const insightsKpisEl = document.getElementById("insights-kpis");
+      const insightsSegmentsEl = document.getElementById("insights-segments");
+      const insightsNotesEl = document.getElementById("insights-notes");
+      const insightsPriorityEl = document.getElementById("insights-priority");
+      const insightsRoadmapEl = document.getElementById("insights-roadmap");
+      const runSimBtn = document.getElementById("run-sim-btn");
+      const simResultsEl = document.getElementById("sim-results");
+      const simMethodologyEl = document.getElementById("sim-methodology");
+      let riskChart = null;
+      let fsiHistChart = null;
+      let trendChart = null;
+      let currentGroupBy = "day";
+
+      const VAR_LABELS = {
+        income: "Gelir",
+        expense: "Gider",
+        tracking: "Harcama takibi",
+        budget_plan: "Bütçe planı",
+        saving: "Tasarruf",
+        s11: "Likert S11",
+        s12: "Likert S12",
+        s13: "Likert S13",
+        s14: "Likert S14",
+        stress_raw: "Stres (ham)",
+        stress_norm: "Stres (normalize)",
+        behavior_score: "Davranış skoru",
+        budget_gap: "Bütçe farkı",
+        budget_pressure: "Bütçe baskısı",
+        fsi: "FSI"
+      };
+      let currentUser = null;
+      let auditPage = 1;
+      const auditPageSize = 20;
+
+      if (typeof Chart !== "undefined") {
+        Chart.defaults.font.family = "'DM Sans', system-ui, sans-serif";
+        Chart.defaults.color = "#5a6270";
+      }
+
+      setGroupButtonsState();
+      initialize();
+
+      function getHeaders() {
+        return { "Content-Type": "application/json" };
+      }
+
+      function filterQuery(extra = {}) {
+        const params = new URLSearchParams();
+        if (startDateInput.value) params.set("start", startDateInput.value);
+        if (endDateInput.value) params.set("end", endDateInput.value);
+        const risk = riskFilter.value;
+        if (risk && risk !== "all") params.set("riskLevel", risk);
+        const lim = latestLimit.value;
+        if (lim && lim !== "10") params.set("limit", lim);
+        Object.entries(extra).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && String(v).trim() !== "") {
+            params.set(k, String(v).trim());
+          }
+        });
+        const qs = params.toString();
+        return qs ? `?${qs}` : "";
+      }
+
+      function buildQuery(extra = {}) {
+        const params = new URLSearchParams();
+        if (startDateInput.value) params.set("start", startDateInput.value);
+        if (endDateInput.value) params.set("end", endDateInput.value);
+        Object.entries(extra).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && String(v).trim() !== "") {
+            params.set(k, String(v).trim());
+          }
+        });
+        const qs = params.toString();
+        return qs ? `?${qs}` : "";
+      }
+
+      function formatFilterLine(af) {
+        if (!af) return "";
+        const datePart =
+          af.start || af.end
+            ? `${af.start || "…"} — ${af.end || "…"}`
+            : "sınır yok (tüm kayıtlar)";
+        const riskMap = {
+          "Yuksek Risk": "Yüksek",
+          "Orta Risk": "Orta",
+          "Dusuk Risk": "Düşük"
+        };
+        const r =
+          af.riskLevel && af.riskLevel !== "all"
+            ? riskMap[af.riskLevel] || af.riskLevel
+            : "tümü";
+        return `Aktif filtre · Tarih: ${datePart} · Risk: ${r}`;
+      }
+
+      function pad2(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function toYMD(d) {
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      }
+
+      function applyDatePreset(key) {
+        const today = new Date();
+        if (key === "all") {
+          startDateInput.value = "";
+          endDateInput.value = "";
+          return;
+        }
+        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        let start;
+        if (key === "7d") {
+          start = new Date(end);
+          start.setDate(start.getDate() - 6);
+        } else if (key === "30d") {
+          start = new Date(end);
+          start.setDate(start.getDate() - 29);
+        } else if (key === "thismonth") {
+          start = new Date(end.getFullYear(), end.getMonth(), 1);
+        } else if (key === "lastmonth") {
+          const firstThis = new Date(end.getFullYear(), end.getMonth(), 1);
+          const lastPrev = new Date(firstThis.getTime() - 86400000);
+          const firstPrev = new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1);
+          start = firstPrev;
+          end.setTime(lastPrev.getTime());
+        } else {
+          return;
+        }
+        startDateInput.value = toYMD(start);
+        endDateInput.value = toYMD(end);
+      }
+
+      function setGroupButtonsState() {
+        [groupDayBtn, groupWeekBtn, groupMonthBtn].forEach((btn) => {
+          const g = btn.getAttribute("data-group");
+          const on = g === currentGroupBy;
+          btn.classList.toggle("btn--primary", on);
+          btn.classList.toggle("btn--secondary", !on);
+        });
+      }
+
+      async function fetchAdmin(url, options = {}) {
+        const response = await fetch(url, {
+          credentials: "include",
+          ...options
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.message || "Admin erisim hatasi.");
+        }
+        return data;
+      }
+
+      async function fetchAdminPost(url, body) {
+        const response = await fetch(url, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body || {})
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.message || "Admin erisim hatasi.");
+        }
+        return data;
+      }
+
+      async function loadSummary() {
+        await loadSession();
+        const data = await fetchAdmin(`/api/admin/summary${filterQuery()}`);
+        const t = data.totals || {};
+        filterActiveEl.textContent = formatFilterLine(data.appliedFilter);
+
+        summaryEl.innerHTML = `
+          <div class="metric-grid" style="margin-top:12px">
+            <div class="metric"><div class="metric__label">Toplam analiz (n)</div><div class="metric__value">${t.total || 0}</div></div>
+            <div class="metric"><div class="metric__label">Ortalama FSI</div><div class="metric__value">${((t.avg_fsi || 0) * 100).toFixed(1)}%</div></div>
+            <div class="metric"><div class="metric__label">Ortalama stres (norm.)</div><div class="metric__value">${((t.avg_stress || 0) * 100).toFixed(1)}%</div></div>
+            <div class="metric"><div class="metric__label">Risk (Y / O / D)</div><div class="metric__value" style="font-size:0.95rem">${t.high_count || 0} / ${t.medium_count || 0} / ${t.low_count || 0}</div></div>
+          </div>
+        `;
+
+        latestEl.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Kayıt</th><th>Tarih</th><th>E-posta</th><th>FSI</th><th>Risk</th></tr>
+            </thead>
+            <tbody>
+              ${(data.latest || []).length === 0
+                ? `<tr><td colspan="5">Bu filtreyle kayıt yok.</td></tr>`
+                : (data.latest || [])
+                    .map(
+                      (row) => `
+                    <tr>
+                      <td>${row.id}</td>
+                      <td>${new Date(row.created_at).toLocaleString("tr-TR")}</td>
+                      <td>${row.email || "-"}</td>
+                      <td>${(row.fsi * 100).toFixed(1)}%</td>
+                      <td>${row.risk_level}</td>
+                    </tr>
+                  `
+                    )
+                    .join("")}
+            </tbody>
+          </table>
+        `;
+        renderChart(t);
+        renderFsiHistogram(data.fsiHistogram);
+        setGroupButtonsState();
+        await loadTrend();
+        await loadInsights();
+        await loadUsersIfAdmin();
+        await loadAuditIfAdmin();
+      }
+
+      async function loadSession() {
+        const data = await fetchAdmin("/api/admin/me");
+        currentUser = data.user || null;
+        sessionInfoEl.textContent = currentUser
+          ? `Oturum açık: ${currentUser.username} · ${currentUser.role}`
+          : "";
+      }
+
+      async function initialize() {
+        try {
+          await loadSummary();
+        } catch (_err) {
+          // Session may not exist yet, this is expected.
+        }
+      }
+
+      function renderChart(totals) {
+        if (riskChart) {
+          riskChart.destroy();
+        }
+        riskChart = new Chart(chartEl, {
+          type: "bar",
+          data: {
+            labels: ["Yüksek", "Orta", "Düşük"],
+            datasets: [
+              {
+                label: "Kayıt sayısı",
+                data: [
+                  totals.high_count || 0,
+                  totals.medium_count || 0,
+                  totals.low_count || 0
+                ],
+                backgroundColor: ["#b42318", "#b45309", "#166534"],
+                borderRadius: 4,
+                maxBarThickness: 48
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+          }
+        });
+      }
+
+      function renderFsiHistogram(hist) {
+        if (fsiHistChart) {
+          fsiHistChart.destroy();
+        }
+        const labels = (hist && hist.labels) || [];
+        const counts = (hist && hist.counts) || [0, 0, 0, 0, 0];
+        fsiHistChart = new Chart(fsiHistChartEl, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Kayıt sayısı",
+                data: counts,
+                backgroundColor: "#2d6a8f",
+                borderRadius: 4,
+                maxBarThickness: 44
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title(items) {
+                    return items.length ? `FSI ${items[0].label}` : "";
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { maxRotation: 40, minRotation: 0, autoSkip: false }
+              },
+              y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+          }
+        });
+      }
+
+      async function loadTrend() {
+        const data = await fetchAdmin(`/api/admin/timeseries${filterQuery({ groupBy: currentGroupBy })}`);
+
+        if (trendChart) {
+          trendChart.destroy();
+        }
+
+        const rows = data.rows || [];
+        const labels = rows.map((x) => x.period);
+        const fsis = rows.map((x) => Number(((x.avg_fsi || 0) * 100).toFixed(2)));
+        const volumes = rows.map((x) => Number(x.total || 0));
+
+        trendChart = new Chart(trendChartEl, {
+          data: {
+            labels,
+            datasets: [
+              {
+                type: "line",
+                label: "Ortalama FSI (%)",
+                data: fsis,
+                borderColor: "#1a4b6e",
+                backgroundColor: "rgba(26, 75, 110, 0.1)",
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                fill: true,
+                tension: 0.25,
+                yAxisID: "y"
+              },
+              {
+                type: "bar",
+                label: "Analiz adedi",
+                data: volumes,
+                backgroundColor: "rgba(90, 98, 112, 0.35)",
+                borderRadius: 3,
+                maxBarThickness: 22,
+                yAxisID: "y1"
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: { position: "bottom", labels: { boxWidth: 12 } }
+            },
+            scales: {
+              x: { grid: { color: "#eef0f2" } },
+              y: {
+                id: "y",
+                position: "left",
+                beginAtZero: true,
+                suggestedMax: 100,
+                title: { display: true, text: "FSI %" },
+                grid: { color: "#eef0f2" }
+              },
+              y1: {
+                id: "y1",
+                position: "right",
+                beginAtZero: true,
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: "Adet" },
+                ticks: { precision: 0 }
+              }
+            }
+          }
+        });
+      }
+
+      async function downloadFile(url) {
+        const response = await fetch(url, { credentials: "include" });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.message || "Dosya indirilemedi.");
+        }
+
+        const blob = await response.blob();
+        const contentDisposition = response.headers.get("Content-Disposition") || "";
+        const match = /filename="?([^"]+)"?/.exec(contentDisposition);
+        const filename = match ? match[1] : "rapor.dat";
+
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      loginBtn.addEventListener("click", async () => {
+        const username = usernameInput.value.trim();
+        const pw = passwordInput.value.trim();
+        if (!username || !pw) {
+          alert("Lütfen kullanıcı adı ve şifre girin.");
+          return;
+        }
+        try {
+          await fetchAdmin("/api/admin/login", {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({ username, password: pw })
+          });
+          await loadSummary();
+          alert("Giriş başarılı.");
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          await fetchAdmin("/api/admin/logout", { method: "POST" });
+          summaryEl.innerHTML = "";
+          latestEl.innerHTML = "";
+          if (riskChart) riskChart.destroy();
+          if (fsiHistChart) fsiHistChart.destroy();
+          if (trendChart) trendChart.destroy();
+          filterActiveEl.textContent = "";
+          sessionInfoEl.textContent = "";
+          usersTableEl.innerHTML = "";
+          userManagementEl.style.display = "none";
+          statsSummaryEl.innerHTML = "";
+          statsDescEl.innerHTML = "";
+          statsCorrEl.innerHTML = "";
+          statsRegEl.innerHTML = "";
+          insightsPriorityEl.innerHTML = "";
+          insightsKpisEl.innerHTML = "";
+          insightsSegmentsEl.innerHTML = "";
+          insightsNotesEl.innerHTML = "";
+          insightsRoadmapEl.innerHTML = "";
+          simMethodologyEl.textContent = "";
+          simResultsEl.innerHTML = "";
+          auditCardEl.style.display = "none";
+          auditTableEl.innerHTML = "";
+          alert("Çıkış yapıldı.");
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      refreshBtn.addEventListener("click", () => {
+        loadSummary().catch((err) => alert(err.message));
+      });
+
+      loadStatsBtn.addEventListener("click", () => {
+        loadFullAnalytics().catch((err) => alert(err.message));
+      });
+
+      loadInsightsBtn.addEventListener("click", () => {
+        loadInsights().catch((err) => alert(err.message));
+      });
+
+      runSimBtn.addEventListener("click", () => {
+        runScenarioSimulation().catch((err) => alert(err.message));
+      });
+
+      csvBtn.addEventListener("click", async () => {
+        try {
+          await downloadFile(`/api/admin/export.csv${filterQuery()}`);
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      pdfBtn.addEventListener("click", async () => {
+        try {
+          await downloadFile(`/api/admin/export.pdf${filterQuery()}`);
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      applyFilterBtn.addEventListener("click", () => {
+        loadSummary().catch((err) => alert(err.message));
+      });
+
+      document.querySelector(".filter-presets").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-preset]");
+        if (!btn) return;
+        applyDatePreset(btn.getAttribute("data-preset"));
+        loadSummary().catch((err) => alert(err.message));
+      });
+
+      [groupDayBtn, groupWeekBtn, groupMonthBtn].forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentGroupBy = btn.getAttribute("data-group") || "day";
+          setGroupButtonsState();
+          loadTrend().catch((err) => alert(err.message));
+        });
+      });
+
+      addUserBtn.addEventListener("click", async () => {
+        try {
+          await fetchAdmin("/api/admin/users", {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({
+              username: newUsernameInput.value.trim(),
+              password: newPasswordInput.value.trim(),
+              role: newRoleInput.value
+            })
+          });
+          newUsernameInput.value = "";
+          newPasswordInput.value = "";
+          await loadUsersIfAdmin();
+          alert("Kullanici eklendi.");
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      refreshUsersBtn.addEventListener("click", () => {
+        loadUsersIfAdmin().catch((err) => alert(err.message));
+      });
+
+      async function loadUsersIfAdmin() {
+        if (!currentUser || currentUser.role !== "admin") {
+          userManagementEl.style.display = "none";
+          return;
+        }
+        userManagementEl.style.display = "block";
+        const data = await fetchAdmin("/api/admin/users");
+        usersTableEl.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>#</th><th>Kullanıcı</th><th>Rol</th><th>Oluşturulma</th><th>İşlem</th></tr>
+            </thead>
+            <tbody>
+              ${(data.users || [])
+                .map(
+                  (u) => `
+                    <tr>
+                      <td>${u.id}</td>
+                      <td>${u.username}</td>
+                      <td>
+                        <select data-role-id="${u.id}">
+                          <option value="viewer" ${u.role === "viewer" ? "selected" : ""}>viewer</option>
+                          <option value="analyst" ${u.role === "analyst" ? "selected" : ""}>analyst</option>
+                          <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
+                        </select>
+                      </td>
+                      <td>${new Date(u.created_at).toLocaleString("tr-TR")}</td>
+                      <td>
+                        <button type="button" class="btn btn--primary btn--sm" data-save-id="${u.id}">Kaydet</button>
+                        <button type="button" class="btn btn--secondary btn--sm" data-delete-id="${u.id}">Sil</button>
+                      </td>
+                    </tr>
+                  `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        `;
+
+        usersTableEl.querySelectorAll("[data-save-id]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-save-id");
+            const roleSelect = usersTableEl.querySelector(`[data-role-id="${id}"]`);
+            try {
+              await fetchAdmin(`/api/admin/users/${id}`, {
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify({ role: roleSelect.value })
+              });
+              alert("Rol guncellendi.");
+            } catch (error) {
+              alert(error.message);
+            }
+          });
+        });
+
+        usersTableEl.querySelectorAll("[data-delete-id]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-delete-id");
+            if (!confirm("Bu kullanici silinsin mi?")) return;
+            try {
+              await fetchAdmin(`/api/admin/users/${id}`, { method: "DELETE" });
+              await loadUsersIfAdmin();
+            } catch (error) {
+              alert(error.message);
+            }
+          });
+        });
+      }
+
+      async function loadAuditIfAdmin() {
+        if (!currentUser || currentUser.role !== "admin") {
+          auditCardEl.style.display = "none";
+          auditTableEl.innerHTML = "";
+          return;
+        }
+        auditCardEl.style.display = "block";
+        const data = await fetchAdmin(
+          `/api/admin/audit-logs${buildQuery({
+            limit: auditPageSize,
+            page: auditPage,
+            action: auditActionInput.value,
+            q: auditSearchInput.value,
+            critical: auditCriticalOnlyInput.checked ? "true" : ""
+          })}`
+        );
+        const pagination = data.pagination || {
+          page: 1,
+          totalPages: 1,
+          total: (data.rows || []).length
+        };
+        auditPageInfoEl.textContent = `Sayfa ${pagination.page} / ${pagination.totalPages} (Toplam ${pagination.total})`;
+        auditPrevBtn.disabled = pagination.page <= 1;
+        auditNextBtn.disabled = pagination.page >= pagination.totalPages;
+        auditTableEl.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Tarih</th><th>Aktor</th><th>Aksiyon</th><th>Hedef</th><th>Detay</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(data.rows || [])
+                .map(
+                  (x) => `
+                    <tr class="${getAuditRowClass(x.action)}">
+                      <td>${x.id}</td>
+                      <td>${new Date(x.created_at).toLocaleString("tr-TR")}</td>
+                      <td>${x.actor_username || "-"}</td>
+                      <td>${x.action}</td>
+                      <td>${x.target_type || "-"}:${x.target_id || "-"}</td>
+                      <td>${x.detail || "-"}</td>
+                    </tr>
+                  `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      changePasswordBtn.addEventListener("click", async () => {
+        try {
+          await fetchAdmin("/api/admin/change-password", {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({
+              oldPassword: oldPasswordInput.value.trim(),
+              newPassword: newSelfPasswordInput.value.trim()
+            })
+          });
+          oldPasswordInput.value = "";
+          newSelfPasswordInput.value = "";
+          alert("Sifreniz guncellendi.");
+          await loadAuditIfAdmin();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      refreshAuditBtn.addEventListener("click", () => {
+        auditPage = 1;
+        loadAuditIfAdmin().catch((err) => alert(err.message));
+      });
+
+      exportAuditBtn.addEventListener("click", async () => {
+        try {
+          await downloadFile(
+            `/api/admin/audit-logs/export.csv${buildQuery({
+              action: auditActionInput.value,
+              q: auditSearchInput.value,
+              critical: auditCriticalOnlyInput.checked ? "true" : ""
+            })}`
+          );
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      auditPrevBtn.addEventListener("click", () => {
+        if (auditPage > 1) {
+          auditPage -= 1;
+          loadAuditIfAdmin().catch((err) => alert(err.message));
+        }
+      });
+
+      auditNextBtn.addEventListener("click", () => {
+        auditPage += 1;
+        loadAuditIfAdmin().catch((err) => alert(err.message));
+      });
+
+      let auditSearchDebounce = null;
+      auditSearchInput.addEventListener("input", () => {
+        clearTimeout(auditSearchDebounce);
+        auditSearchDebounce = setTimeout(() => {
+          auditPage = 1;
+          loadAuditIfAdmin().catch((err) => alert(err.message));
+        }, 300);
+      });
+
+      auditActionInput.addEventListener("change", () => {
+        auditPage = 1;
+        loadAuditIfAdmin().catch((err) => alert(err.message));
+      });
+
+      auditCriticalOnlyInput.addEventListener("change", () => {
+        auditPage = 1;
+        loadAuditIfAdmin().catch((err) => alert(err.message));
+      });
+
+      function getAuditRowClass(action) {
+        if (action === "LOGIN_FAILED") return "audit-critical";
+        if (action === "USER_DELETED") return "audit-warning";
+        if (action === "PASSWORD_CHANGED_SELF") return "audit-info";
+        return "";
+      }
+
+      function corrCellStyle(v) {
+        if (v === null || Number.isNaN(v)) return "background:#f1f5f9;";
+        const t = (v + 1) / 2;
+        const r = Math.round(255 * (1 - t));
+        const g = Math.round(200 * t);
+        const b = Math.round(255 * (1 - Math.abs(v)));
+        return `background:rgba(${r},${g},${b},0.55);text-align:center;`;
+      }
+
+      function riskLevelTr(rl) {
+        const m = {
+          "Yuksek Risk": "Yüksek",
+          "Orta Risk": "Orta",
+          "Dusuk Risk": "Düşük"
+        };
+        return m[rl] || rl;
+      }
+
+      function ratioText(v) {
+        if (v === null || v === undefined || Number.isNaN(v)) return "-";
+        return `${(v * 100).toFixed(1)}%`;
+      }
+
+      function numText(v, digits = 3) {
+        if (v === null || v === undefined || Number.isNaN(v)) return "-";
+        return Number(v).toFixed(digits);
+      }
+
+      function trendDirectionTr(direction) {
+        if (direction === "up") return "Yukarı yönlü risk eğilimi";
+        if (direction === "down") return "Aşağı yönlü iyileşme eğilimi";
+        return "Dengeli / yatay eğilim";
+      }
+
+      function priorityTr(p) {
+        if (p === "red") return "Kırmızı";
+        if (p === "yellow") return "Sarı";
+        return "Yeşil";
+      }
+
+      function scoreBand(score) {
+        if (score >= 70) return { label: "Kritik aksiyon", css: "priority-red" };
+        if (score >= 40) return { label: "Yakın takip", css: "priority-yellow" };
+        return { label: "Stabil", css: "priority-green" };
+      }
+
+      function formatDeltaPctPoints(v) {
+        if (v === null || v === undefined || Number.isNaN(v)) return "-";
+        const pp = v * 100;
+        const sign = pp > 0 ? "+" : "";
+        return `${sign}${pp.toFixed(2)} puan`;
+      }
+
+      async function loadInsights() {
+        const window = Number(insightWindowInput.value || 7);
+        const data = await fetchAdmin(`/api/admin/analytics/insights${filterQuery({ window })}`);
+        const k = data.kpis || {};
+        const trend = data.trend || {};
+        const score = Number(data.actionScore || 0);
+        const band = scoreBand(score);
+
+        insightsPriorityEl.innerHTML = `
+          <div class="priority-badge ${band.css}">
+            <span>Aksiyon skoru</span>
+            <strong>${score}/100</strong>
+            <em>${band.label}</em>
+          </div>
+        `;
+
+        insightsKpisEl.innerHTML = `
+          <div class="metric"><div class="metric__label">Ortalama FSI</div><div class="metric__value">${ratioText(k.avgFsi)}</div></div>
+          <div class="metric"><div class="metric__label">FSI medyan</div><div class="metric__value">${ratioText(k.medianFsi)}</div></div>
+          <div class="metric"><div class="metric__label">FSI volatilite (std)</div><div class="metric__value">${numText(k.stdFsi, 4)}</div></div>
+          <div class="metric"><div class="metric__label">Yüksek risk oranı</div><div class="metric__value">${ratioText(k.highRiskRate)}</div></div>
+          <div class="metric"><div class="metric__label">Bütçe baskısı ort.</div><div class="metric__value">${ratioText(k.avgBudgetPressure)}</div></div>
+          <div class="metric"><div class="metric__label">Davranış skoru ort.</div><div class="metric__value">${ratioText(k.avgBehaviorScore)}</div></div>
+        `;
+
+        const segRows = (data.segmentComparison || [])
+          .map(
+            (s) => `<tr>
+              <td>${riskLevelTr(s.riskLevel)}</td>
+              <td>${s.n}</td>
+              <td>${ratioText(s.avgFsi)}</td>
+              <td>${ratioText(s.avgStressNorm)}</td>
+              <td>${ratioText(s.avgBudgetPressure)}</td>
+              <td>${ratioText(s.avgBehaviorScore)}</td>
+            </tr>`
+          )
+          .join("");
+        insightsSegmentsEl.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Segment</th><th>n</th><th>Ort. FSI</th><th>Ort. stres</th><th>Ort. bütçe baskısı</th><th>Ort. davranış</th></tr>
+            </thead>
+            <tbody>${segRows || '<tr><td colspan="6">Veri yok.</td></tr>'}</tbody>
+          </table>
+        `;
+
+        const warnings = (data.warnings || []).map((w) => `<li>${w}</li>`).join("");
+        const recs = (data.recommendations || []).map((r) => `<li>${r}</li>`).join("");
+        insightsNotesEl.innerHTML = `
+          <div class="insight-card">
+            <h4>Trend değerlendirmesi</h4>
+            <p>${trendDirectionTr(trend.direction)} · Son pencere ort: ${ratioText(trend.recentAvg)} · Baz ort: ${ratioText(
+              trend.baselineAvg
+            )} · Delta: ${ratioText(trend.delta)}.</p>
+          </div>
+          <div class="insight-card">
+            <h4>Erken uyarılar</h4>
+            <ul>${warnings || "<li>Belirgin kritik sinyal yok.</li>"}</ul>
+          </div>
+          <div class="insight-card">
+            <h4>Önerilen aksiyonlar</h4>
+            <ul>${recs}</ul>
+          </div>
+        `;
+
+        const roadmapRows = (data.roadmap || [])
+          .map(
+            (r) => `<tr>
+              <td><span class="roadmap-tag roadmap-${r.priority}">${priorityTr(r.priority)}</span></td>
+              <td>${r.area || "-"}</td>
+              <td>${r.action || "-"}</td>
+              <td>${r.owner || "-"}</td>
+              <td>${r.horizon || "-"}</td>
+            </tr>`
+          )
+          .join("");
+        insightsRoadmapEl.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Öncelik</th><th>Alan</th><th>Aksiyon</th><th>Sorumlu</th><th>Zaman</th></tr>
+            </thead>
+            <tbody>${roadmapRows || '<tr><td colspan="5">Yol haritası maddesi üretilmedi.</td></tr>'}</tbody>
+          </table>
+        `;
+      }
+
+      async function runScenarioSimulation() {
+        const window = Number(insightWindowInput.value || 7);
+        const bp = Number(document.getElementById("sim-bp-pct").value);
+        const st = Number(document.getElementById("sim-st-pct").value);
+        const bh = Number(document.getElementById("sim-beh-pts").value);
+        const data = await fetchAdminPost(`/api/admin/analytics/simulate${filterQuery({ window })}`, {
+          budgetPressurePct: bp,
+          stressNormPct: st,
+          behaviorScorePts: bh
+        });
+
+        if (!data.n) {
+          simMethodologyEl.textContent = "";
+          simResultsEl.innerHTML =
+            '<p class="subtitle">Bu filtreyle gözlem yok; senaryo çalıştırılamadı.</p>';
+          return;
+        }
+
+        simMethodologyEl.textContent = data.methodology || "";
+        const b = data.baseline || {};
+        const s = data.simulated || {};
+        const d = data.delta || {};
+        const sc = data.scenario || {};
+
+        simResultsEl.innerHTML = `
+          <div class="metric-grid">
+            <div class="metric">
+              <div class="metric__label">Uygulanan senaryo</div>
+              <div class="metric__value" style="font-size:0.95rem">
+                Bütçe %${sc.budgetPressurePct} · Stres %${sc.stressNormPct} · Davranış ${sc.behaviorScorePts >= 0 ? "+" : ""}${sc.behaviorScorePts}
+              </div>
+            </div>
+            <div class="metric">
+              <div class="metric__label">Aksiyon skoru</div>
+              <div class="metric__value">${b.actionScore} → ${s.actionScore} (${d.actionScore >= 0 ? "+" : ""}${d.actionScore})</div>
+            </div>
+            <div class="metric">
+              <div class="metric__label">Ortalama FSI</div>
+              <div class="metric__value">${ratioText(b.avgFsi)} → ${ratioText(s.avgFsi)} (${formatDeltaPctPoints(d.avgFsi)})</div>
+            </div>
+            <div class="metric">
+              <div class="metric__label">Yüksek risk oranı</div>
+              <div class="metric__value">${ratioText(b.highRiskRate)} → ${ratioText(s.highRiskRate)} (${formatDeltaPctPoints(d.highRiskRate)})</div>
+            </div>
+          </div>
+          <p class="subtitle" style="margin-top:12px">
+            Trend (baz): ${trendDirectionTr(b.trendDirection || "flat")} · Senaryo sonrası: ${trendDirectionTr(s.trendDirection || "flat")}
+          </p>
+        `;
+      }
+
+      async function loadFullAnalytics() {
+        const data = await fetchAdmin(`/api/admin/analytics/full${filterQuery()}`);
+        statsSummaryEl.innerHTML = `
+          <p><strong>Gözlem sayısı (n):</strong> ${data.n}</p>
+          ${data.warning ? `<p class="subtitle">${data.warning}</p>` : ""}
+        `;
+
+        const stats = data.stats || {};
+        statsDescEl.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Değişken</th><th>n</th><th>Ort.</th><th>Medyan</th><th>Sapma</th><th>Min</th><th>Max</th></tr>
+            </thead>
+            <tbody>
+              ${Object.entries(stats)
+                .map(([k, s]) => {
+                  if (!s || !s.n) return "";
+                  const label = VAR_LABELS[k] || k;
+                  return `<tr>
+                    <td>${label}</td>
+                    <td>${s.n}</td>
+                    <td>${s.mean != null ? s.mean.toFixed(4) : "-"}</td>
+                    <td>${s.median != null ? s.median.toFixed(4) : "-"}</td>
+                    <td>${s.std != null ? s.std.toFixed(4) : "-"}</td>
+                    <td>${s.min != null ? s.min.toFixed(2) : "-"}</td>
+                    <td>${s.max != null ? s.max.toFixed(2) : "-"}</td>
+                  </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        `;
+
+        const pearson = data.pearson;
+        if (!pearson || !pearson.labels) {
+          statsCorrEl.innerHTML = "<p>Yetersiz veri.</p>";
+        } else {
+          const labs = pearson.labels.map((l) => VAR_LABELS[l] || l);
+          const M = pearson.matrix;
+          const head = `<tr><th></th>${labs.map((l) => `<th>${l}</th>`).join("")}</tr>`;
+          const body = pearson.labels
+            .map(
+              (rowKey, i) =>
+                `<tr><th>${VAR_LABELS[rowKey] || rowKey}</th>${M[i]
+                  .map((v) => `<td style="${corrCellStyle(v)}">${v === null ? "-" : v.toFixed(3)}</td>`)
+                  .join("")}</tr>`
+            )
+            .join("");
+          statsCorrEl.innerHTML = `<div class="table-scroll-x"><table class="data-table">${head}${body}</table></div>`;
+        }
+
+        const reg = data.regression || {};
+        const ml = reg.multipleLinear || {};
+        let mlHtml = "";
+        if (ml.ok) {
+          const c = ml.coefficients || {};
+          mlHtml = `
+            <p><strong>Çoklu doğrusal regresyon (OLS)</strong> — bağımlı: FSI</p>
+            <p>R²: ${ml.rSquared != null ? ml.rSquared.toFixed(4) : "-"} · RMSE: ${ml.rmse != null ? ml.rmse.toFixed(4) : "-"} · n: ${ml.n}</p>
+            <ul>
+              <li>Sabit: ${c.intercept != null ? c.intercept.toFixed(6) : "-"}</li>
+              <li>${VAR_LABELS.stress_norm}: ${c.stress_norm != null ? c.stress_norm.toFixed(6) : "-"}</li>
+              <li>${VAR_LABELS.budget_pressure}: ${c.budget_pressure != null ? c.budget_pressure.toFixed(6) : "-"}</li>
+              <li>Davranış riski (1 − davranış skoru): ${c.behavior_risk != null ? c.behavior_risk.toFixed(6) : "-"}</li>
+            </ul>
+            <p class="subtitle">${ml.note || ""}</p>
+          `;
+        } else {
+          mlHtml = `<p>${ml.message || "Çoklu regresyon hesaplanamadı."} (n=${ml.n || 0})</p>`;
+        }
+
+        const simple = reg.simpleVsFsi || {};
+        const simpleRows = Object.entries(simple)
+          .map(([name, s]) => {
+            if (!s) return "";
+            const vn = VAR_LABELS[name] || name;
+            return `<tr>
+              <td>FSI ~ ${vn}</td>
+              <td>${s.n}</td>
+              <td>${s.pearsonR != null ? s.pearsonR.toFixed(4) : "-"}</td>
+              <td>${s.rSquared != null ? s.rSquared.toFixed(4) : "-"}</td>
+              <td>${s.slope != null ? s.slope.toFixed(6) : "-"}</td>
+              <td>${s.intercept != null ? s.intercept.toFixed(6) : "-"}</td>
+            </tr>`;
+          })
+          .join("");
+
+        const byRisk = (reg.fsiByRisk || [])
+          .map(
+            (g) =>
+              `<tr><td>${riskLevelTr(g.risk_level)}</td><td>${g.n}</td><td>${g.mean_fsi != null ? g.mean_fsi.toFixed(4) : "-"}</td><td>${g.std_fsi != null ? g.std_fsi.toFixed(4) : "-"}</td></tr>`
+          )
+          .join("");
+
+        statsRegEl.innerHTML = `
+          ${mlHtml}
+          <h4>Basit regresyonlar (FSI, tek tek değişkenler)</h4>
+          <table>
+            <thead>
+              <tr><th>Model</th><th>n</th><th>r</th><th>R²</th><th>Eğim</th><th>Sabit</th></tr>
+            </thead>
+            <tbody>${simpleRows}</tbody>
+          </table>
+          <h4>Risk düzeyine göre FSI özeti</h4>
+          <table>
+            <thead>
+              <tr><th>Risk</th><th>n</th><th>Ort. FSI</th><th>Std FSI</th></tr>
+            </thead>
+            <tbody>${byRisk}</tbody>
+          </table>
+        `;
+      }
+    </script>
+  </body>
+</html>

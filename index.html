@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="BudgetMind — öğrenciler için finansal stres indeksi (FSI) ve davranışsal risk özeti. Bilimsel model referanslı değerlendirme."
+    />
+    <title>BudgetMind | Finansal davranış ve stres analizi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header site-header--elevated">
+      <div class="site-header__inner">
+        <div class="brand-block">
+          <span class="logo">BudgetMind</span>
+          <span class="logo-badge">FSI v1</span>
+        </div>
+        <div class="site-header__actions">
+          <span class="logo-sub">Öğrenci harcamaları ve finansal stres değerlendirmesi</span>
+          <a class="header-link" href="admin.html" id="admin-link">Yönetim paneli</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero" aria-label="Giriş">
+      <div class="hero__inner container">
+        <p class="hero__eyebrow">Finansal sağlık taraması</p>
+        <h1 class="hero__title">Davranışlarınız ve stresiniz tek indekste birleşsin</h1>
+        <p class="hero__lead">
+          Dokuz kısa soru ile FSI (Finansal Stres İndeksi) hesaplanır; bütçe baskısı, stres ölçeği ve
+          davranış disiplini modelde ayrı ağırlıklarla birleştirilir. Sonuç kişisel yatırım tavsiyesi
+          değildir; farkındalık ve önceliklendirme içindir.
+        </p>
+        <ul class="hero__facts" role="list">
+          <li><strong>Model:</strong> FSI = 0,55×stres + 0,25×bütçe baskısı + 0,20×davranış riski</li>
+          <li><strong>Süre:</strong> yaklaşık 2 dakika</li>
+          <li><strong>Veri:</strong> isteğe bağlı e-posta; analiz için açık rıza gerekir</li>
+        </ul>
+      </div>
+    </section>
+
+    <main class="container main-stack">
+      <section class="panel panel--accent-edge" id="panel-quiz">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel__title">Değerlendirme anketi</h2>
+            <p class="panel__lead panel__lead--tight">
+              Sorular üç blokta gruplandı. İlerlemeyi üstteki adımlardan takip edebilirsiniz.
+            </p>
+          </div>
+        </div>
+
+        <ol class="step-track" id="step-track" aria-label="Anket adımları"></ol>
+        <div class="progress-bar" aria-hidden="true">
+          <div class="progress-bar__fill" id="progress-fill"></div>
+        </div>
+
+        <div class="meta-fields form-grid-2 meta-card">
+          <div>
+            <label for="email">E-posta (isteğe bağlı)</label>
+            <input id="email" type="email" placeholder="ornek@kurum.edu.tr" autocomplete="email" />
+          </div>
+          <div>
+            <label class="checkbox" style="margin-top: 1.75rem">
+              <input id="send-email" type="checkbox" />
+              Sonucu e-posta ile almak istiyorum
+            </label>
+          </div>
+        </div>
+        <label class="checkbox consent-line">
+          <input id="consent" type="checkbox" />
+          Kişisel verilerin işlenmesine ilişkin bilgilendirmeyi okudum; analiz için verilerimin
+          kullanılmasını onaylıyorum.
+        </label>
+
+        <div id="step-panels"></div>
+
+        <div class="actions actions--split">
+          <div class="step-nav">
+            <button id="step-prev" type="button" class="btn btn--secondary" disabled>Önceki blok</button>
+            <button id="step-next" type="button" class="btn btn--secondary">Sonraki blok</button>
+          </div>
+          <div class="actions__primary">
+            <button id="analyze-btn" type="button" class="btn btn--primary">FSI hesapla</button>
+            <button id="reset-btn" type="button" class="btn btn--ghost">Formu sıfırla</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="result-card" class="panel panel--result hidden">
+        <div class="result-header">
+          <div>
+            <h2 class="panel__title">Özet rapor</h2>
+            <p class="panel__lead panel__lead--tight">
+              Aşağıdaki grafikler model bileşenlerinizi ve birleşik FSI değerinizi gösterir.
+            </p>
+          </div>
+          <button id="copy-result-btn" type="button" class="btn btn--secondary btn--sm">Özeti kopyala</button>
+        </div>
+        <div id="deployment-banner" class="callout callout--info hidden" role="status"></div>
+        <div id="result-summary"></div>
+        <div id="result-feedback"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container site-footer__inner">
+        <p>
+          <strong>BudgetMind</strong> — FSI eşikleri: düşük &lt; %40 · orta %40–%59 · yüksek ≥ %60.
+        </p>
+        <p class="site-footer__muted">
+          Yerel kurulumda kayıtlar SQLite ile saklanır; Vercel üzerinde yalnızca hesaplama uçları
+          çalışır. Yönetim ve dışa aktarım için projeyi kendi sunucunuzda veya yerelde çalıştırın.
+        </p>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

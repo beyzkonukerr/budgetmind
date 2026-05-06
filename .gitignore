@@ -1,0 +1,9 @@
+node_modules/
+budgetmind.db
+backups/
+.env
+.env.local
+.vercel
+*.log
+.DS_Store
+Thumbs.db
